@@ -1,12 +1,12 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from models import User, Admin, Service, Product, ServiceRequest, ProductOrder, PurchaseHistory, ServiceHistory
+from models import db, app
+# app = Flask(__name__)
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test_database.db'
+# db = SQLAlchemy(app)
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///your_database.db'  # Replace with your actual database URI
-db = SQLAlchemy(app)
-
-# Define your models (User, Admin, Service, Product, etc.) here
+# Define your models (User, Admin, Service, Product, ServiceRequest, ProductOrder, PurchaseHistory, ServiceHistory) here
 
 # Endpoint to get all users
 @app.route('/users', methods=['GET'])
@@ -24,6 +24,25 @@ def create_user():
     db.session.commit()
     return jsonify({'message': 'User created successfully'}), 201
 
+# Endpoint to get all admins
+@app.route('/admins', methods=['GET'])
+def get_admins():
+    admins = Admin.query.all()
+    admin_list = [{'admin_id': admin.admin_id, 'username': admin.username, 'email': admin.email, 'full_name': admin.full_name} for admin in admins]
+    return jsonify(admin_list)
+
+# Endpoint to create a new admin
+@app.route('/admins', methods=['POST'])
+def create_admin():
+    data = request.get_json()
+    new_admin = Admin(username=data['username'], password=data['password'], email=data['email'], full_name=data['full_name'])
+    db.session.add(new_admin)
+    db.session.commit()
+    return jsonify({'message': 'Admin created successfully'}), 201
+
+# Add similar endpoints for other tables (Service, Product, ServiceRequest, ProductOrder, PurchaseHistory, ServiceHistory)
+
+# Define endpoints for relationships (e.g., ServiceRequest, ProductOrder, PurchaseHistory, ServiceHistory)
 # Endpoint to get all services
 @app.route('/services', methods=['GET'])
 def get_services():
@@ -40,9 +59,56 @@ def create_service():
     db.session.commit()
     return jsonify({'message': 'Service created successfully'}), 201
 
-# Add similar endpoints for other tables (Admin, Product, ServiceRequest, ProductOrder, PurchaseHistory, ServiceHistory)
+# Add endpoints for Product table and its relationships
+# Endpoint to get all products
+@app.route('/products', methods=['GET'])
+def get_products():
+    products = Product.query.all()
+    product_list = [{'product_id': product.product_id, 'name': product.name, 'description': product.description, 'price': float(product.price)} for product in products]
+    return jsonify(product_list)
 
-# Define endpoints for relationships (e.g., ServiceRequest, ProductOrder, PurchaseHistory, ServiceHistory)
+# Endpoint to create a new product
+@app.route('/products', methods=['POST'])
+def create_product():
+    data = request.get_json()
+    new_product = Product(name=data['name'], description=data['description'], price=data['price'])
+    db.session.add(new_product)
+    db.session.commit()
+    return jsonify({'message': 'Product created successfully'}), 201
+
+# Add endpoints for ServiceRequest table
+# Endpoint to get all service requests
+@app.route('/service-requests', methods=['GET'])
+def get_service_requests():
+    service_requests = ServiceRequest.query.all()
+    requests = [{'request_id': request.request_id, 'user_id': request.user_id, 'service_id': request.service_id, 'is_approved': request.is_approved, 'requested_at': request.requested_at} for request in service_requests]
+    return jsonify(requests)
+
+# Add endpoints for ProductOrder table
+# Endpoint to get all product orders
+@app.route('/product-orders', methods=['GET'])
+def get_product_orders():
+    product_orders = ProductOrder.query.all()
+    orders = [{'order_id': order.order_id, 'user_id': order.user_id, 'product_id': order.product_id, 'is_approved': order.is_approved, 'ordered_at': order.ordered_at} for order in product_orders]
+    return jsonify(orders)
+
+# Add endpoints for PurchaseHistory table
+# Endpoint to get all purchase history
+@app.route('/purchase-history', methods=['GET'])
+def get_purchase_history():
+    purchase_history = PurchaseHistory.query.all()
+    history = [{'purchase_id': record.purchase_id, 'user_id': record.user_id, 'service_id': record.service_id, 'product_id': record.product_id, 'purchase_date': record.purchase_date} for record in purchase_history]
+    return jsonify(history)
+
+# Add endpoints for ServiceHistory table
+# Endpoint to get all service history
+@app.route('/service-history', methods=['GET'])
+def get_service_history():
+    service_history = ServiceHistory.query.all()
+    history = [{'history_id': record.history_id, 'user_id': record.user_id, 'service_id': record.service_id, 'service_date': record.service_date} for record in service_history]
+    return jsonify(history)
+
+
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(port=5555, debug=True)
