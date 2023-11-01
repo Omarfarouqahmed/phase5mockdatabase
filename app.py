@@ -2,6 +2,15 @@ from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from models import User, Admin, Service, Product, ServiceRequest, ProductOrder, PurchaseHistory, ServiceHistory
 from models import db, app
+from flask_login import LoginManager, login_user, current_user, login_required
+from functools import wraps
+from werkzeug.security import check_password_hash
+app.secret_key = 'asdfghjklpoiuytrewq1234567890'
+# from flask_login import current_user
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
 # app = Flask(__name__)
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test_database.db'
 # db = SQLAlchemy(app)
@@ -109,6 +118,40 @@ def get_service_history():
     return jsonify(history)
 
 
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.json['username']
+    password = request.json['password']
+    user = User.query.filter_by(username=username).first()
+    if user and check_password_hash(user.password, password):
+        login_user(user)
+        return jsonify({'message': 'Login successful'})
+    else:
+        return jsonify({'message': 'Login failed'}, 401)
+    
+
+def admin_required(func):
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+        if not current_user.is_admin:
+            return jsonify({'message': 'Access denied. You must be an admin.'}, 403)
+        return func(*args, **kwargs)
+    return login_required(decorated_view)
+
+@app.route('/admin/dashboard', methods=['GET'])
+@admin_required
+def admin_dashboard():
+    # Your admin dashboard logic here
+    return jsonify({'message': 'Admin dashboard'})
+
+
 
 if __name__ == '__main__':
+    
+
     app.run(port=5555, debug=True)

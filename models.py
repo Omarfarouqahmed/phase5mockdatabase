@@ -15,6 +15,7 @@ class User(db.Model):
     product_orders = db.relationship('ProductOrder', backref='user')
     purchase_history = db.relationship('PurchaseHistory', backref='user')
     service_history = db.relationship('ServiceHistory', backref='user')
+    is_admin = db.Column(db.Boolean, default=False)
 
 class Admin(db.Model):
     admin_id = db.Column(db.Integer, primary_key=True)
@@ -22,6 +23,7 @@ class Admin(db.Model):
     password = db.Column(db.String(255), nullable=False)
     email = db.Column(db.String(255), nullable=False)
     full_name = db.Column(db.String(255), nullable=False)
+    is_admin = db.Column(db.Boolean, default=True)
 
 class Service(db.Model):
     service_id = db.Column(db.Integer, primary_key=True)
